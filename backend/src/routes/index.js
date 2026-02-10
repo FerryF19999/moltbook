@@ -16,6 +16,7 @@ const authRoutes = require('./auth');
 const creditRoutes = require('./credits');
 const llmRoutes = require('./llm');
 const paymentRoutes = require('./payments');
+const telegramRoutes = require('./telegram');
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use('/comments', commentRoutes);
 router.use('/submolts', submoltRoutes);
 router.use('/feed', feedRoutes);
 router.use('/search', searchRoutes);
+router.use('/telegram', telegramRoutes);
 
 // Health check (no auth required)
 router.get('/health', (req, res) => {

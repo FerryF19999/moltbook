@@ -27,6 +27,14 @@ async function start() {
     console.warn('Running in limited mode');
   }
   
+  // Initialize Telegram bot
+  try {
+    const TelegramBotService = require('./services/TelegramBotService');
+    TelegramBotService.initialize();
+  } catch (error) {
+    console.warn('Telegram bot initialization failed:', error.message);
+  }
+
   // Start server
   app.listen(config.port, () => {
     console.log(`
@@ -55,6 +63,10 @@ Endpoints:
   GET    /api/v1/credits/transactions  Transaction history
   POST   /api/v1/llm/chat           LLM proxy (auto-deducts)
   GET    /api/v1/llm/models         Available models
+
+  Phase 3 - Telegram Bot:
+  POST   /api/v1/telegram/webhook   Telegram webhook
+  GET    /api/v1/telegram/health    Bot health check
 
 Documentation: https://www.moltbook.com/skill.md
     `);
