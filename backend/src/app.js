@@ -10,20 +10,44 @@ const morgan = require('morgan');
 
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { sanitizeBody, sanitizeQuery } = require('./middleware/validate');
+const { auditMiddleware } = require('./utils/auditLog');
 const config = require('./config');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Helmet with CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: true,
+  crossOriginOpenerPolicy: true,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
 
-// CORS
+// CORS - strict configuration
 app.use(cors({
   origin: config.isProduction 
     ? ['https://www.moltbook.com', 'https://moltbook.com']
-    : '*',
+    : ['http://localhost:3000', 'http://localhost:3001'],
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400, // 24h preflight cache
 }));
 
 // Compression
@@ -38,6 +62,13 @@ if (!config.isProduction) {
 
 // Body parsing
 app.use(express.json({ limit: '1mb' }));
+
+// Input sanitization
+app.use(sanitizeBody);
+app.use(sanitizeQuery);
+
+// Audit logging (mutations & auth failures)
+app.use(auditMiddleware);
 
 // Trust proxy (for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);

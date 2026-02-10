@@ -1,6 +1,29 @@
 node_modules/
 .next/
-.env
-.env.local
 dist/
 build/
+coverage/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Archives
+*.tgz

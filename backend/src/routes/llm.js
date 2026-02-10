@@ -17,11 +17,30 @@ router.post('/chat', async (req, res, next) => {
   try {
     const { model, messages, temperature, max_tokens } = req.body;
 
-    if (!model || !messages || !Array.isArray(messages)) {
+    if (!model || typeof model !== 'string' || !messages || !Array.isArray(messages)) {
       return res.status(400).json({
         success: false,
         error: 'model (string) and messages (array) are required',
       });
+    }
+    
+    // Validate model name (prevent injection)
+    if (!/^[a-zA-Z0-9._-]{1,100}$/.test(model)) {
+      return res.status(400).json({ success: false, error: 'Invalid model name format' });
+    }
+    
+    // Validate messages structure
+    if (messages.length === 0 || messages.length > 100) {
+      return res.status(400).json({ success: false, error: 'Messages must contain 1-100 entries' });
+    }
+    
+    for (const msg of messages) {
+      if (!msg.role || !msg.content || typeof msg.content !== 'string') {
+        return res.status(400).json({ success: false, error: 'Each message must have role and content (string)' });
+      }
+      if (!['system', 'user', 'assistant'].includes(msg.role)) {
+        return res.status(400).json({ success: false, error: 'Message role must be system, user, or assistant' });
+      }
     }
 
     // Rate limit check

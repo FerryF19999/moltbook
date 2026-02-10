@@ -9,8 +9,8 @@ const midtransClient = require('midtrans-client');
 
 const midtransConfig = {
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-  serverKey: process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-XXXXXXXXXXXXXXXXXXXXXXXX',
-  clientKey: process.env.MIDTRANS_CLIENT_KEY || 'SB-Mid-client-XXXXXXXXXXXXXXXXXXXXXXXX',
+  serverKey: process.env.MIDTRANS_SERVER_KEY || '',
+  clientKey: process.env.MIDTRANS_CLIENT_KEY || '',
 };
 
 // Snap API client (for creating transactions)

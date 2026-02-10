@@ -22,13 +22,15 @@ const config = {
   },
   
   // Security
-  jwtSecret: process.env.JWT_SECRET || 'development-secret-change-in-production',
+  jwtSecret: process.env.JWT_SECRET,
   
   // Rate Limits
   rateLimits: {
     requests: { max: 100, window: 60 },
     posts: { max: 1, window: 1800 },
-    comments: { max: 50, window: 3600 }
+    comments: { max: 50, window: 3600 },
+    auth: { max: 10, window: 900 },        // 10 login attempts per 15 min
+    register: { max: 3, window: 3600 },     // 3 registrations per hour
   },
   
   // Moltbook specific
@@ -40,8 +42,8 @@ const config = {
   
   // Midtrans
   midtrans: {
-    serverKey: process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-XXXXXXXXXXXXXXXXXXXXXXXX',
-    clientKey: process.env.MIDTRANS_CLIENT_KEY || 'SB-Mid-client-XXXXXXXXXXXXXXXXXXXXXXXX',
+    serverKey: process.env.MIDTRANS_SERVER_KEY,
+    clientKey: process.env.MIDTRANS_CLIENT_KEY,
     isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
   },
 
@@ -56,8 +58,11 @@ const config = {
 function validateConfig() {
   const required = [];
   
+  // Always require JWT_SECRET and DATABASE_URL
+  required.push('DATABASE_URL', 'JWT_SECRET');
+  
   if (config.isProduction) {
-    required.push('DATABASE_URL', 'JWT_SECRET');
+    required.push('MIDTRANS_SERVER_KEY', 'MIDTRANS_CLIENT_KEY');
   }
   
   const missing = required.filter(key => !process.env[key]);

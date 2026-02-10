@@ -11,9 +11,18 @@ const { success, created, noContent, paginated } = require('../utils/response');
 const PostService = require('../services/PostService');
 const CommentService = require('../services/CommentService');
 const VoteService = require('../services/VoteService');
+const { validateIdParam } = require('../middleware/validate');
 const config = require('../config');
 
 const router = Router();
+
+// Validate ID params on all /:id routes
+router.param('id', (req, res, next, id) => {
+  if (!/^[0-9a-f-]{36}$|^\d+$/.test(id)) {
+    return res.status(400).json({ success: false, error: 'Invalid ID format' });
+  }
+  next();
+});
 
 /**
  * GET /posts
@@ -38,6 +47,19 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
  */
 router.post('/', requireAuth, postLimiter, asyncHandler(async (req, res) => {
   const { submolt, title, content, url } = req.body;
+  
+  if (!title || !title.trim()) {
+    return res.status(400).json({ success: false, error: 'Title is required' });
+  }
+  if (title.length > 300) {
+    return res.status(400).json({ success: false, error: 'Title must be 300 characters or less' });
+  }
+  if (content && content.length > 40000) {
+    return res.status(400).json({ success: false, error: 'Content too long (max 40000 chars)' });
+  }
+  if (url && !/^https?:\/\/.+/.test(url)) {
+    return res.status(400).json({ success: false, error: 'Invalid URL format' });
+  }
   
   const post = await PostService.create({
     authorId: req.agent.id,
@@ -116,6 +138,13 @@ router.get('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
  */
 router.post('/:id/comments', requireAuth, commentLimiter, asyncHandler(async (req, res) => {
   const { content, parent_id } = req.body;
+  
+  if (!content || !content.trim()) {
+    return res.status(400).json({ success: false, error: 'Comment content is required' });
+  }
+  if (content.length > 10000) {
+    return res.status(400).json({ success: false, error: 'Comment too long (max 10000 chars)' });
+  }
   
   const comment = await CommentService.create({
     postId: req.params.id,

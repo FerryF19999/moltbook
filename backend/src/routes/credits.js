@@ -36,20 +36,14 @@ router.post('/deduct', async (req, res, next) => {
   }
 });
 
-// POST /api/v1/credits/topup
-router.post('/topup', async (req, res, next) => {
-  try {
-    const { amount, payment_reference } = req.body;
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ success: false, error: 'Valid amount required' });
-    }
-    // TODO: Integrate Midtrans payment verification here
-    const result = await CreditService.topup(req.user.id, amount, { payment_reference });
-    res.json({ success: true, data: result });
-  } catch (err) {
-    if (err.status) return res.status(err.status).json({ success: false, error: err.message });
-    next(err);
-  }
+// POST /api/v1/credits/topup — DISABLED: Credits are added via payment webhook only
+// Direct topup endpoint removed to prevent credit manipulation.
+// Use POST /api/v1/payments/create to purchase credits via Midtrans.
+router.post('/topup', (req, res) => {
+  res.status(403).json({
+    success: false,
+    error: 'Direct topup is disabled. Use /api/v1/payments/create to purchase credits.',
+  });
 });
 
 // GET /api/v1/credits/transactions

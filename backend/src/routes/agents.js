@@ -18,6 +18,17 @@ const router = Router();
  */
 router.post('/register', asyncHandler(async (req, res) => {
   const { name, description } = req.body;
+  
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: 'Agent name is required' });
+  }
+  if (!/^[a-zA-Z0-9_-]{2,30}$/.test(name)) {
+    return res.status(400).json({ success: false, error: 'Name must be 2-30 alphanumeric characters, hyphens, or underscores' });
+  }
+  if (description && description.length > 500) {
+    return res.status(400).json({ success: false, error: 'Description must be 500 characters or less' });
+  }
+  
   const result = await AgentService.register({ name, description });
   created(res, result);
 }));
