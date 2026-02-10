@@ -9,6 +9,7 @@ const { queryOne, queryAll, query } = require('../config/database');
 const CreditService = require('./CreditService');
 const { CREDIT_PACKAGES } = require('../config/midtrans');
 const PaymentService = require('./PaymentService');
+const VerificationService = require('./VerificationService');
 
 let bot = null;
 
@@ -60,6 +61,7 @@ class TelegramBotService {
 
   static _registerCommands() {
     bot.onText(/\/start(?:\s+(.+))?/, (msg, match) => this._handleStart(msg, match));
+    bot.onText(/\/verify(?:\s+(.+))?/, (msg, match) => this._handleVerify(msg, match));
     bot.onText(/\/balance/, (msg) => this._handleBalance(msg));
     bot.onText(/\/buy/, (msg) => this._handleBuy(msg));
     bot.onText(/\/status(?:\s+(.+))?/, (msg, match) => this._handleStatus(msg, match));
@@ -68,6 +70,7 @@ class TelegramBotService {
     // Set bot menu commands
     bot.setMyCommands([
       { command: 'start', description: 'Register / link your Moltbook account' },
+      { command: 'verify', description: 'Verify your Moltbook account' },
       { command: 'balance', description: 'Check your credit balance' },
       { command: 'buy', description: 'Buy credit packages' },
       { command: 'status', description: 'Check payment status' },
@@ -100,6 +103,12 @@ class TelegramBotService {
           { parse_mode: 'Markdown' }
         );
         return;
+      }
+
+      if (linkToken && linkToken.startsWith('verify_')) {
+        // Deep link from verification flow
+        const verifyToken = linkToken.replace('verify_', '');
+        return this._handleVerify(msg, [null, verifyToken]);
       }
 
       if (linkToken) {
@@ -149,6 +158,46 @@ class TelegramBotService {
     } catch (err) {
       console.error('[TelegramBot] /start error:', err);
       await bot.sendMessage(chatId, '⚠️ Terjadi kesalahan. Silakan coba lagi nanti.');
+    }
+  }
+
+  /**
+   * /verify [token]
+   * Verify Moltbook account ownership via Telegram
+   */
+  static async _handleVerify(msg, match) {
+    const chatId = msg.chat.id;
+    const telegramUserId = msg.from.id.toString();
+    const telegramUsername = msg.from.username || '';
+    const token = match ? match[1] : null;
+
+    if (!token) {
+      await bot.sendMessage(chatId,
+        `🔐 *Verifikasi Akun Moltbook*\n\n` +
+        `Untuk verifikasi:\n` +
+        `1️⃣ Buka Moltbook → Settings → Verifications\n` +
+        `2️⃣ Klik "Connect Telegram"\n` +
+        `3️⃣ Copy token yang diberikan\n` +
+        `4️⃣ Kirim: \`/verify <token>\`\n\n` +
+        `Atau klik link yang diberikan di dashboard.`,
+        { parse_mode: 'Markdown' }
+      );
+      return;
+    }
+
+    try {
+      const result = await VerificationService.verifyTelegram(telegramUserId, telegramUsername, token);
+      await bot.sendMessage(chatId,
+        `✅ *Verifikasi Berhasil!*\n\n` +
+        `Akun Telegram kamu (@${telegramUsername || telegramUserId}) sudah terverifikasi dengan Moltbook.\n\n` +
+        `Kamu sekarang bisa menggunakan semua fitur bot.`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (err) {
+      console.error('[TelegramBot] /verify error:', err);
+      await bot.sendMessage(chatId,
+        `❌ Verifikasi gagal: ${err.message}\n\nPastikan token masih valid (berlaku 30 menit).`
+      );
     }
   }
 
@@ -318,6 +367,7 @@ class TelegramBotService {
     await bot.sendMessage(msg.chat.id,
       `🤖 *Moltbook Bot — Help*\n\n` +
       `/start — Hubungkan akun Moltbook\n` +
+      `/verify — Verifikasi akun Moltbook\n` +
       `/balance — Cek saldo kredit\n` +
       `/buy — Beli paket kredit\n` +
       `/status — Cek status pembayaran\n` +

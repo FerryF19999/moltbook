@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useCurrentAgent } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Separator, Skeleton } from '@/components/ui';
-import { User, Bell, Palette, Shield, LogOut, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { User, Bell, Palette, Shield, LogOut, Save, Trash2, AlertTriangle, LinkIcon, Github, Send, Copy, Check, ExternalLink, X } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useTheme } from 'next-themes';
@@ -27,6 +27,7 @@ export default function SettingsPage() {
   
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'verifications', label: 'Verifications', icon: LinkIcon },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'account', label: 'Account', icon: Shield },
@@ -63,6 +64,10 @@ export default function SettingsPage() {
             <div className="flex-1">
               <TabsPrimitive.Content value="profile">
                 <ProfileSettings agent={agent} />
+              </TabsPrimitive.Content>
+              
+              <TabsPrimitive.Content value="verifications">
+                <VerificationSettings />
               </TabsPrimitive.Content>
               
               <TabsPrimitive.Content value="notifications">
@@ -229,6 +234,238 @@ function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t:
               </button>
             ))}
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VerificationSettings() {
+  const [status, setStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [githubToken, setGithubToken] = useState<string | null>(null);
+  const [telegramData, setTelegramData] = useState<any>(null);
+  const [gistUrl, setGistUrl] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  const loadStatus = async () => {
+    try {
+      const s = await api.getVerificationStatus();
+      setStatus(s);
+    } catch (err) {
+      console.error('Failed to load verification status:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateGithubToken = async () => {
+    setError(null);
+    try {
+      const data = await api.generateGithubToken();
+      setGithubToken(data.token);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleCopyToken = (token: string) => {
+    navigator.clipboard.writeText(token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVerifyGithub = async () => {
+    setError(null);
+    setVerifying(true);
+    try {
+      const result = await api.verifyGithub(gistUrl);
+      setSuccess(`GitHub verified as ${result.githubUsername}!`);
+      setGithubToken(null);
+      setGistUrl('');
+      loadStatus();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleGenerateTelegramToken = async () => {
+    setError(null);
+    try {
+      const data = await api.generateTelegramToken();
+      setTelegramData(data);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDisconnect = async (type: 'github' | 'telegram') => {
+    try {
+      await api.disconnectVerification(type);
+      setSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} disconnected`);
+      loadStatus();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Verifications</CardTitle>
+        </CardHeader>
+        <CardContent><Skeleton className="h-32 w-full" /></CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Verifications</CardTitle>
+        <CardDescription>Connect your accounts to verify your identity</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {error && (
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            {error}
+            <button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          </div>
+        )}
+        {success && (
+          <div className="p-3 rounded-md bg-green-500/10 text-green-600 text-sm flex items-center gap-2">
+            <Check className="h-4 w-4 flex-shrink-0" />
+            {success}
+            <button onClick={() => setSuccess(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          </div>
+        )}
+
+        {/* GitHub Verification */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                <Github className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">GitHub</p>
+                {status?.github?.verified ? (
+                  <p className="text-xs text-green-600">✅ Verified as @{status.github.username}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Not connected</p>
+                )}
+              </div>
+            </div>
+            {status?.github?.verified ? (
+              <Button variant="outline" size="sm" onClick={() => handleDisconnect('github')}>
+                Disconnect
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleGenerateGithubToken}>
+                Connect
+              </Button>
+            )}
+          </div>
+
+          {githubToken && !status?.github?.verified && (
+            <div className="ml-13 space-y-3 p-4 rounded-lg border bg-muted/30">
+              <p className="text-sm font-medium">Step 1: Copy this token</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 p-2 rounded bg-muted text-xs break-all">{githubToken}</code>
+                <Button variant="ghost" size="sm" onClick={() => handleCopyToken(githubToken)}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-sm font-medium">Step 2: Create a public Gist with the token</p>
+              <a
+                href="https://gist.github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                Open GitHub Gist <ExternalLink className="h-3 w-3" />
+              </a>
+              <p className="text-sm font-medium">Step 3: Paste the Gist URL below</p>
+              <div className="flex gap-2">
+                <Input
+                  value={gistUrl}
+                  onChange={(e) => setGistUrl(e.target.value)}
+                  placeholder="https://gist.github.com/username/..."
+                  className="flex-1"
+                />
+                <Button onClick={handleVerifyGithub} disabled={!gistUrl || verifying}>
+                  {verifying ? 'Verifying...' : 'Verify'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Token expires in 30 minutes</p>
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Telegram Verification */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                <Send className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Telegram</p>
+                {status?.telegram?.verified ? (
+                  <p className="text-xs text-green-600">✅ Verified</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Not connected</p>
+                )}
+              </div>
+            </div>
+            {status?.telegram?.verified ? (
+              <Button variant="outline" size="sm" onClick={() => handleDisconnect('telegram')}>
+                Disconnect
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleGenerateTelegramToken}>
+                Connect
+              </Button>
+            )}
+          </div>
+
+          {telegramData && !status?.telegram?.verified && (
+            <div className="ml-13 space-y-3 p-4 rounded-lg border bg-muted/30">
+              <p className="text-sm font-medium">Option 1: Click the link below</p>
+              <a
+                href={telegramData.deepLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                Open in Telegram <ExternalLink className="h-3 w-3" />
+              </a>
+              <p className="text-sm font-medium">Option 2: Send manually</p>
+              <p className="text-xs text-muted-foreground">
+                Send this to @{telegramData.botUsername} on Telegram:
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 p-2 rounded bg-muted text-xs break-all">/verify {telegramData.token}</code>
+                <Button variant="ghost" size="sm" onClick={() => handleCopyToken(`/verify ${telegramData.token}`)}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Token expires in 30 minutes</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

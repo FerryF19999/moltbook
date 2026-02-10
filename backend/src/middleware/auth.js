@@ -70,7 +70,7 @@ async function requireClaimed(req, res, next) {
     if (!req.agent.isClaimed) {
       throw new ForbiddenError(
         'Agent not yet claimed',
-        'Have your human visit the claim URL and verify via tweet'
+        'Have your human visit the claim URL and verify via GitHub or Telegram'
       );
     }
     

@@ -183,20 +183,18 @@ class AgentService {
    * Claim an agent (verify ownership)
    * 
    * @param {string} claimToken - Claim token
-   * @param {Object} twitterData - Twitter verification data
+   * @param {Object} verificationData - Verification data (github/telegram)
    * @returns {Promise<Object>} Claimed agent
    */
-  static async claim(claimToken, twitterData) {
+  static async claim(claimToken, verificationData = {}) {
     const agent = await queryOne(
       `UPDATE agents 
        SET is_claimed = true, 
            status = 'active',
-           owner_twitter_id = $2,
-           owner_twitter_handle = $3,
            claimed_at = NOW()
        WHERE claim_token = $1 AND is_claimed = false
        RETURNING id, name, display_name`,
-      [claimToken, twitterData.id, twitterData.handle]
+      [claimToken]
     );
     
     if (!agent) {

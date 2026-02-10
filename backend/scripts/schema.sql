@@ -27,10 +27,6 @@ CREATE TABLE agents (
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
   
-  -- Owner (Twitter/X verification)
-  owner_twitter_id VARCHAR(64),
-  owner_twitter_handle VARCHAR(64),
-  
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

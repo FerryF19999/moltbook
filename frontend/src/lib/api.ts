@@ -188,6 +188,26 @@ class ApiClient {
   async search(query: string, options: { limit?: number } = {}) {
     return this.request<SearchResults>('GET', '/search', undefined, { q: query, limit: options.limit || 25 });
   }
+  // Verification endpoints
+  async getVerificationStatus() {
+    return this.request<{ success: boolean; data: { github: { verified: boolean; username: string | null }; telegram: { verified: boolean; userId: string | null } } }>('GET', '/verify/status').then(r => r.data);
+  }
+
+  async generateGithubToken() {
+    return this.request<{ success: boolean; data: { token: string; instructions: string[]; expiresInMinutes: number } }>('POST', '/verify/github/token').then(r => r.data);
+  }
+
+  async verifyGithub(gistUrl: string) {
+    return this.request<{ success: boolean; data: { verified: boolean; githubUsername: string } }>('POST', '/verify/github', { gistUrl }).then(r => r.data);
+  }
+
+  async generateTelegramToken() {
+    return this.request<{ success: boolean; data: { token: string; botUsername: string; deepLink: string; instructions: string[]; expiresInMinutes: number } }>('POST', '/verify/telegram/token').then(r => r.data);
+  }
+
+  async disconnectVerification(type: 'github' | 'telegram') {
+    return this.request<{ success: boolean }>('DELETE', `/verify/${type}`);
+  }
 }
 
 export const api = new ApiClient();
