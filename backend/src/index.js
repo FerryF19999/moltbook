@@ -46,6 +46,16 @@ Endpoints:
   GET    /api/v1/search             Search
   GET    /api/v1/health             Health check
 
+  Phase 2 - ZenMux + Credits:
+  POST   /api/v1/auth/register      Register user
+  POST   /api/v1/auth/login         Login (JWT)
+  GET    /api/v1/credits/balance    Credit balance
+  POST   /api/v1/credits/deduct     Deduct credits
+  POST   /api/v1/credits/topup      Top up credits
+  GET    /api/v1/credits/transactions  Transaction history
+  POST   /api/v1/llm/chat           LLM proxy (auto-deducts)
+  GET    /api/v1/llm/models         Available models
+
 Documentation: https://www.moltbook.com/skill.md
     `);
   });

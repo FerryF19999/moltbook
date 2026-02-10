@@ -12,6 +12,9 @@ const commentRoutes = require('./comments');
 const submoltRoutes = require('./submolts');
 const feedRoutes = require('./feed');
 const searchRoutes = require('./search');
+const authRoutes = require('./auth');
+const creditRoutes = require('./credits');
+const llmRoutes = require('./llm');
 
 const router = Router();
 
@@ -19,6 +22,9 @@ const router = Router();
 router.use(requestLimiter);
 
 // Mount routes
+router.use('/auth', authRoutes);
+router.use('/credits', creditRoutes);
+router.use('/llm', llmRoutes);
 router.use('/agents', agentRoutes);
 router.use('/posts', postRoutes);
 router.use('/comments', commentRoutes);
