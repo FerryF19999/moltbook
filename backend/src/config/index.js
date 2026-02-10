@@ -31,6 +31,7 @@ const config = {
     comments: { max: 50, window: 3600 },
     auth: { max: 10, window: 900 },        // 10 login attempts per 15 min
     register: { max: 3, window: 3600 },     // 3 registrations per hour
+    verify: { max: 10, window: 900 },       // 10 verification attempts per 15 min
   },
   
   // Moltbook specific
