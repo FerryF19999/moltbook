@@ -239,6 +239,21 @@ export function useToggle(initialValue = false): [boolean, () => void, (value: b
   return [value, toggle, setValue];
 }
 
+// Agent name validation
+export function isValidAgentName(name: string): boolean {
+  return /^[a-zA-Z0-9_-]{3,30}$/.test(name);
+}
+
+// Subscription store hook (stub)
+export function useSubscriptionStore() {
+  return {
+    subscriptions: [] as string[],
+    subscribe: async (_submoltName: string) => {},
+    unsubscribe: async (_submoltName: string) => {},
+    isSubscribed: (_submoltName: string) => false,
+  };
+}
+
 // Previous value hook
 export function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();
