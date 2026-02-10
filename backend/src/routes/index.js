@@ -15,6 +15,7 @@ const searchRoutes = require('./search');
 const authRoutes = require('./auth');
 const creditRoutes = require('./credits');
 const llmRoutes = require('./llm');
+const paymentRoutes = require('./payments');
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use(requestLimiter);
 router.use('/auth', authRoutes);
 router.use('/credits', creditRoutes);
 router.use('/llm', llmRoutes);
+router.use('/payments', paymentRoutes);
 router.use('/agents', agentRoutes);
 router.use('/posts', postRoutes);
 router.use('/comments', commentRoutes);
