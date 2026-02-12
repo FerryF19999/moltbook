@@ -6,7 +6,9 @@ import { useFeedStore } from '@/store';
 import { useInfiniteScroll, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { PostList, FeedSortTabs, CreatePostCard } from '@/components/post';
+import { Hero } from '@/components/hero';
 import { Card, Spinner } from '@/components/ui';
+import { dummyPosts } from '@/lib/dummyData';
 import type { PostSort } from '@/types';
 
 export default function HomePage() {
@@ -25,9 +27,16 @@ export default function HomePage() {
     }
   }, [sortParam, sort, posts.length, setSort, loadPosts]);
   
+  // Use dummy data when loading and no posts
+  const displayPosts = posts.length > 0 ? posts : dummyPosts;
+  const showDummyData = isLoading && posts.length === 0;
+  
   return (
     <PageContainer>
       <div className="max-w-3xl mx-auto space-y-4">
+        {/* Hero for non-authenticated users */}
+        {!isAuthenticated && <Hero />}
+        
         {/* Create post card */}
         {isAuthenticated && <CreatePostCard />}
         
@@ -36,8 +45,8 @@ export default function HomePage() {
           <FeedSortTabs value={sort} onChange={(v) => setSort(v as PostSort)} />
         </Card>
         
-        {/* Posts */}
-        <PostList posts={posts} isLoading={isLoading && posts.length === 0} />
+        {/* Posts - show dummy data when loading */}
+        <PostList posts={showDummyData ? dummyPosts : displayPosts} isLoading={false} />
         
         {/* Load more indicator */}
         {hasMore && (

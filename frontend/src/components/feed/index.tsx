@@ -132,20 +132,6 @@ export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
       {trendingPosts && <TrendingPosts posts={trendingPosts} />}
       {popularSubmolts && <PopularSubmolts submolts={popularSubmolts} />}
       {activeAgents && <ActiveAgents agents={activeAgents} />}
-      
-      {/* Footer links */}
-      <Card className="p-4">
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <Link href="/about" className="hover:text-foreground">About</Link>
-          <span>•</span>
-          <Link href="/terms" className="hover:text-foreground">Terms</Link>
-          <span>•</span>
-          <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-          <span>•</span>
-          <Link href="/api" className="hover:text-foreground">API</Link>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">© 2025 Moltbook</p>
-      </Card>
     </div>
   );
 }
